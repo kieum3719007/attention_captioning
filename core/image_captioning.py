@@ -28,7 +28,7 @@ CONFIG = {
     "tokenizer": TOKERNIZER
 }
 
-def GetRobertaDecoder(vocab_size, pretrained=PHOBERT_NAME): 
+def GetRobertaDecoder(pretrained=PHOBERT_NAME): 
     configuration = RobertaConfig(is_decoder = True,
                                   add_cross_attention = True)
     model = TFRobertaModel(configuration)
@@ -60,7 +60,7 @@ class TransformerCaptioner(Model):
         self.image_encoder = GetVitEncoder(config["pretrained_model"]["vit"])
 
         self.tokenizer = config["tokenizer"]
-        self.decoder = GetRobertaDecoder(self.tokenizer.vocab_size, config["pretrained_model"]["roberta"])
+        self.decoder = GetRobertaDecoder(config["pretrained_model"]["roberta"])
 
         self.token_classifier = Dense(units=self.tokenizer.vocab_size)
     

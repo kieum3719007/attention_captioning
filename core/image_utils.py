@@ -21,6 +21,3 @@ def process_image(image, size = (384, 384)):
     image = image/128 -1
     image = np.moveaxis(image, -1, 0)
     return image
-
-
-    

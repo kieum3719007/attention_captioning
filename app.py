@@ -47,6 +47,7 @@ def get_prediction(image_bytes):
     try:
         return CAPTIONER(image)
     except:
+        print("Reload weight")
         load_weight()
         return CAPTIONER(image)
 
