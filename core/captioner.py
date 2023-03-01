@@ -6,7 +6,7 @@ from core.image_captioning import TOKERNIZER, MODEL, TransformerCaptioner
 START = TOKERNIZER.cls_token_id
 END = TOKERNIZER.eos_token_id
 
-CAPTIONER = Captioner(MODEL)
+
 
 
 
@@ -43,3 +43,4 @@ class Captioner(tf.Module):
     tokens = self.transformer.tokenizer.convert_ids_to_tokens(output)
     text = self.transformer.tokenizer.convert_tokens_to_string(tokens)
     return text
+CAPTIONER = Captioner(MODEL)

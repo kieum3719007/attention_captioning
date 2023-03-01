@@ -5,6 +5,25 @@ from tensorflow.python.keras import Model
 from tensorflow.python.keras.layers import Dense
 import os.path as osp
 
+class TransformerCaptioner(Model):
+    
+    def __init__(self, config):
+        super().__init__()
+
+        self.image_preprocessor = GetViTPreprocess(config["pretrained_model"]["vit"])
+        self.image_encoder = GetVitEncoder(config["pretrained_model"]["vit"])
+
+        self.tokenizer = config["tokenizer"]
+        self.decoder = GetRobertaDecoder(config["pretrained_model"]["roberta"])
+
+        self.token_classifier = Dense(units=self.tokenizer.vocab_size)
+    
+    def call(self, image, text, training=False):        
+        encoder_hidden_states = self.image_encoder(**image, training=training).last_hidden_state
+        decoder_output = self.decoder(encoder_hidden_states=encoder_hidden_states, **text, training=training)
+        output = self.token_classifier(decoder_output.last_hidden_state)
+        return output    
+    
 
 PHOBERT_NAME = 'vinai/phobert-base'
 CHECKPOINT_PATH =osp.join("model", "base-384")
@@ -53,23 +72,5 @@ def load_weight():
     ckpt.restore(ckpt_manager.latest_checkpoint)
     print(f'Loaded checkpoint from {CHECKPOINT_PATH}')
 
-class TransformerCaptioner(Model):
-    
-    def __init__(self, config):
-        super().__init__()
 
-        self.image_preprocessor = GetViTPreprocess(config["pretrained_model"]["vit"])
-        self.image_encoder = GetVitEncoder(config["pretrained_model"]["vit"])
-
-        self.tokenizer = config["tokenizer"]
-        self.decoder = GetRobertaDecoder(config["pretrained_model"]["roberta"])
-
-        self.token_classifier = Dense(units=self.tokenizer.vocab_size)
-    
-    def call(self, image, text, training=False):        
-        encoder_hidden_states = self.image_encoder(**image, training=training).last_hidden_state
-        decoder_output = self.decoder(encoder_hidden_states=encoder_hidden_states, **text, training=training)
-        output = self.token_classifier(decoder_output.last_hidden_state)
-        return output    
-    
     
