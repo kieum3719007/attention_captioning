@@ -26,8 +26,8 @@ def GetViTPreprocess(pretrained_model):
 
 def load_weight():
     CKPT = tf.train.Checkpoint(model=MODEL)
-    ckpt_manager = tf.train.CheckpointManager(CKPT, CHECKPOINT_PATH, max_to_keep=5)
-    ckpt.restore(ckpt_manager.latest_checkpoint)
+    CKPT_MANAGER = tf.train.CheckpointManager(CKPT, CHECKPOINT_PATH, max_to_keep=5)
+    CKPT.restore(CKPT_MANAGER.latest_checkpoint)
     print(f'Loaded checkpoint from {CHECKPOINT_PATH}')
 
 class TransformerCaptioner(Model):
