@@ -3,9 +3,11 @@ from transformers import RobertaConfig, TFRobertaModel, PhobertTokenizer
 from transformers import ViTFeatureExtractor, TFViTModel
 from tensorflow.python.keras import Model
 from tensorflow.python.keras.layers import Dense
+import os.path as osp
+
 
 PHOBERT_NAME = 'vinai/phobert-base'
-CHECKPOINT_PATH = "model\base-384"
+CHECKPOINT_PATH =osp.join("model", "base-384")
 MODEL = TransformerCaptioner(CONFIG)
 
 # See all ViT models at https://huggingface.co/models?filter=vit
