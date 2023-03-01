@@ -3,7 +3,32 @@ from transformers import RobertaConfig, TFRobertaModel, PhobertTokenizer
 from transformers import ViTFeatureExtractor, TFViTModel
 from tensorflow.python.keras import Model
 from tensorflow.python.keras.layers import Dense
+from tensorflow.keras.losses import categorical_crossentropy
 import os.path as osp
+from core.train import train
+
+def GetRobertaDecoder(pretrained): 
+    configuration = RobertaConfig(is_decoder = True,
+                                  add_cross_attention = True)
+    model = TFRobertaModel(configuration)
+    model.from_pretrained(pretrained)
+    model.layers[0].submodules[1].trainable = False
+    return model
+    
+def GetVitEncoder(pretrained_model):
+    model = TFViTModel.from_pretrained(pretrained_model)
+    model.layers[0].submodules[3].trainable = False
+    return model
+
+def GetViTPreprocess(pretrained_model):
+    model = ViTFeatureExtractor.from_pretrained(pretrained_model)
+    return model
+
+def load_weight():
+    ckpt = tf.train.Checkpoint(model=MODEL)
+    ckpt_manager = tf.train.CheckpointManager(ckpt, CHECKPOINT_PATH, max_to_keep=5)
+    ckpt.restore(ckpt_manager.latest_checkpoint)
+    print(f'Loaded checkpoint from {CHECKPOINT_PATH}')
 
 class TransformerCaptioner(Model):
     
@@ -27,7 +52,7 @@ class TransformerCaptioner(Model):
 
 PHOBERT_NAME = 'vinai/phobert-base'
 CHECKPOINT_PATH =osp.join("model", "base-384")
-MODEL = TransformerCaptioner(CONFIG)
+
 
 # See all ViT models at https://huggingface.co/models?filter=vit
 VIT_MODELS = ["google/vit-base-patch32-384",
@@ -49,28 +74,36 @@ CONFIG = {
     "tokenizer": TOKERNIZER
 }
 
-def GetRobertaDecoder(pretrained=PHOBERT_NAME): 
-    configuration = RobertaConfig(is_decoder = True,
-                                  add_cross_attention = True)
-    model = TFRobertaModel(configuration)
-    model.from_pretrained(pretrained)
-    model.layers[0].submodules[1].trainable = False
-    return model
-    
-def GetVitEncoder(pretrained_model):
-    model = TFViTModel.from_pretrained(pretrained_model)
-    model.layers[0].submodules[3].trainable = False
-    return model
+def scce_with_ls(y, y_hat):
+    y = tf.one_hot(tf.cast(y, tf.int32), TOKERNIZER.vocab_size)
+    return categorical_crossentropy(y, y_hat, from_logits=True)
 
-def GetViTPreprocess(pretrained_model):
-    model = ViTFeatureExtractor.from_pretrained(pretrained_model)
-    return model
+loss_object = scce_with_ls
 
-def load_weight():
-    ckpt = tf.train.Checkpoint(model=MODEL)
-    ckpt_manager = tf.train.CheckpointManager(ckpt, CHECKPOINT_PATH, max_to_keep=5)
-    ckpt.restore(ckpt_manager.latest_checkpoint)
-    print(f'Loaded checkpoint from {CHECKPOINT_PATH}')
+def loss_function(real, pred):
+  mask = tf.math.logical_not(tf.math.equal(real, 1))
+  loss_ = loss_object(real, pred)
+
+  mask = tf.cast(mask, dtype=loss_.dtype)
+  loss_ *= mask
+  return tf.reduce_sum(loss_)/tf.reduce_sum(mask)
+
+LEARNING_RATE = 2e-5
+LOSS = loss_function
+OPTIMIZER = tf.keras.optimizers.legacy.Adam(LEARNING_RATE)
+MODEL = TransformerCaptioner(CONFIG)
+MODEL.compile(optimizer='adam', loss=LOSS)
+CKPT = tf.train.Checkpoint(model=MODEL,
+                           optimizer=OPTIMIZER)
+
+CKPT_MANAGER = tf.train.CheckpointManager(CKPT, CHECKPOINT_PATH, max_to_keep=5)
+load_weight()
+try:
+  train(MODEL, LOSS, OPTIMIZER, CKPT_MANAGER)
+except:
+  print("Load weight after train")
+  load_weight()
+
 
 
     
