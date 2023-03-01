@@ -5,6 +5,8 @@ from tensorflow.python.keras import Model
 from tensorflow.python.keras.layers import Dense
 
 PHOBERT_NAME = 'vinai/phobert-base'
+CHECKPOINT_PATH = "model\base-384"
+MODEL = TransformerCaptioner(CONFIG)
 
 # See all ViT models at https://huggingface.co/models?filter=vit
 VIT_MODELS = ["google/vit-base-patch32-384",
@@ -26,8 +28,6 @@ CONFIG = {
     "tokenizer": TOKERNIZER
 }
 
-
-
 def GetRobertaDecoder(vocab_size, pretrained=PHOBERT_NAME): 
     configuration = RobertaConfig(is_decoder = True,
                                   add_cross_attention = True)
@@ -45,15 +45,11 @@ def GetViTPreprocess(pretrained_model):
     model = ViTFeatureExtractor.from_pretrained(pretrained_model)
     return model
 
-
-def getCaptionModel():
-    checkpoint_path = "model\base-384"
-    caption_model = TransformerCaptioner(CONFIG)
-    ckpt = tf.train.Checkpoint()
+def load_weight():
+    ckpt = tf.train.Checkpoint(model=MODEL)
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
     ckpt.restore(ckpt_manager.latest_checkpoint)
     print(f'Loaded checkpoint from {checkpoint_path}')
-    return caption_model
 
 class TransformerCaptioner(Model):
     

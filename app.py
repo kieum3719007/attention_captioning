@@ -3,11 +3,11 @@ import os
 
 from flask import Flask, render_template, request
 from PIL import Image
-from core.captioner import getModel
+from core.captioner import CAPTIONER
+from core.image_captioning import *
 from core.image_utils import preproccess_image
 
 app = Flask(__name__)
-model = getModel()
 image_size = (384, 384)
 
 def transform_image(image_bytes):
@@ -44,7 +44,11 @@ def get_prediction(image_bytes):
     """
     
     image = transform_image(image_bytes)
-    return model(image)
+    try:
+        return CAPTIONER(image)
+    except:
+        load_weight()
+        return CAPTIONER(image)
 
 
 def save_image(image_bytes):
