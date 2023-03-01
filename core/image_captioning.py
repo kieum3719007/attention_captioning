@@ -25,8 +25,8 @@ def GetViTPreprocess(pretrained_model):
     return model
 
 def load_weight():
-    ckpt = tf.train.Checkpoint(model=MODEL)
-    ckpt_manager = tf.train.CheckpointManager(ckpt, CHECKPOINT_PATH, max_to_keep=5)
+    CKPT = tf.train.Checkpoint(model=MODEL)
+    ckpt_manager = tf.train.CheckpointManager(CKPT, CHECKPOINT_PATH, max_to_keep=5)
     ckpt.restore(ckpt_manager.latest_checkpoint)
     print(f'Loaded checkpoint from {CHECKPOINT_PATH}')
 
@@ -97,12 +97,13 @@ CKPT = tf.train.Checkpoint(model=MODEL,
                            optimizer=OPTIMIZER)
 
 CKPT_MANAGER = tf.train.CheckpointManager(CKPT, CHECKPOINT_PATH, max_to_keep=5)
-load_weight()
+
 try:
-  train(MODEL, LOSS, OPTIMIZER, CKPT_MANAGER)
+    load_weight()
+    train(MODEL, LOSS, OPTIMIZER, CKPT_MANAGER)
 except:
-  print("Load weight after train")
-  load_weight()
+    print("Load weight after train")
+    load_weight()
 
 
 
