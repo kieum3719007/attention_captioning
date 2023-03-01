@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from core.image_captioning import TOKERNIZER, MODEL
+from core.image_captioning import TOKERNIZER, MODEL, TransformerCaptioner
 
 
 START = TOKERNIZER.cls_token_id
